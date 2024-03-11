@@ -1,54 +1,49 @@
-name: Build and Push Docker Image
-
 on:
   push:
     branches:
       - main
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Install git
-        run: sudo apt-get update && sudo apt-get install -y git
-
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set Git identity
+      - name: Install dependencies (optional)
         run: |
-          git config --global user.email "onkar.p@antino.com"
-          git config --global user.name "onkarpasrichaa"
+          python -m ensurepip --upgrade --quiet
+          pip install -r requirements.txt  # Replace with your actual install command
 
-      - name: Set up Docker Buildx
+      - name: Set up Docker Buildx (optional)
         uses: docker/setup-buildx-action@v1
 
-      - name: Get commit count
-        id: commit_count
-        run: echo "::set-output name=COUNT::$(git rev-list --count HEAD)"
-
-      - name: Build and push Docker image
+      - name: Build Docker image (assuming Dockerfile is present)
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         run: |
-          COMMIT_COUNT=$(echo "${{ steps.commit_count.outputs.COUNT }}")
-          sed -i "s/onkarpasrichaa\/python_app:[0-9]*/onkarpasrichaa\/python_app:$COMMIT_COUNT/g" Dockerfile
-          docker build -t onkarpasrichaa/python_app:$COMMIT_COUNT .
-          echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
-          docker push onkarpasrichaa/python_app:$COMMIT_COUNT
-          git add Dockerfile
-          git commit -m "Update image tag to $COMMIT_COUNT" || true
-          git push origin main
+          docker build -t onkarpasrichaa/python_app:latest .
+          echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin  # Masked password
+          docker push onkarpasrichaa/python_app:latest
 
-      - name: Update Helm Chart
-        if: success()
+      - name: Update Helm Chart (if Docker image tag changed)
+        uses: nlopes/git-action@v3  # Use dedicated action for Git operations
         env:
           HELM_CHART_REPO: 'https://github.com/OnkarPasrichaa/helm.git'
+          ACCESS_TOKEN: ${{ secrets.HELM_REPO_ACCESS_TOKEN }}  # Dedicated token for Helm repo
         run: |
-          TAG=$(grep -oP '(?<=onkarpasrichaa/python_app:)[\d.]+' Dockerfile)
-          sed -i "s/onkarpasrichaa\/python-app:[\d.]*/onkarpasrichaa\/python-app:$TAG/g" helm/charts/python_app/values.yaml
-          git add helm/charts/python_app/values.yaml
-          git commit -m "Update image tag to $TAG"
-          git push $HELM_CHART_REPO main
+          git fetch origin main
+          OLD_IMAGE_TAG=$(grep -oP '(?<=onkarpasrichaa/python-app:)[\d.]+' helm/charts/python_app/values.yaml)
+          docker image inspect onkarpasrichaa/python_app:latest | jq -r '.[0].Created' > image_creation_date.txt
+          NEW_IMAGE_TAG=$(date +%Y-%m-%d-%H%M%S)  # Generate unique tag based on timestamp
+
+          if [[ "$OLD_IMAGE_TAG" != "latest" ]]; then  # Only update if tag has changed
+            git config user.name "onkarpasrichaa"
+            git config user.email "onkar.p@antino.com"
+            git checkout main
+            sed -i "s/onkarpasrichaa\/python-app:$OLD_IMAGE_TAG/onkarpasrichaa\/python-app:$NEW_IMAGE_TAG/g" helm/charts/python_app/values.yaml
+            git add helm/charts/python_app/values.yaml
+            git commit -m "Update image tag to $NEW_IMAGE_TAG (built on $(cat image_creation_date.txt))"
+            git push origin main
+          fi
+
