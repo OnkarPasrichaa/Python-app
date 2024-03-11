@@ -10,11 +10,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install dependencies (optional)
-        run: |
-          python -m ensurepip --upgrade --quiet
-          pip install -r requirements.txt  # Replace with your actual install command
-
       - name: Set up Docker Buildx (optional)
         uses: docker/setup-buildx-action@v1
 
