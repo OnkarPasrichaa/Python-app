@@ -45,7 +45,7 @@ jobs:
         env:
           HELM_CHART_REPO: 'https://github.com/onkarpasrichaa/helm'
         run: |
-          TAG=$(grep -oP '(?<=onkarpasrichaa/python-app:)[\d.]+' Dockerfile)
+          TAG=$(grep -oP '(?<=onkarpasrichaa/python_app:)[\d.]+' Dockerfile)
           sed -i "s/onkarpasrichaa\/python-app:[\d.]*/onkarpasrichaa\/python-app:$TAG/g" helm/charts/python_app/values.yaml
           git add helm/charts/python_app/values.yaml
           git commit -m "Update image tag to $TAG"
