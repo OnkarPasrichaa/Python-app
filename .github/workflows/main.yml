@@ -38,6 +38,16 @@ jobs:
           git commit -m "Update image tag to $TAG" || true
           git push origin main
 
+      - name: Update Image Tag Values
+        run: |
+         git clone https://github.com/OnkarPasrichaa/helm.git
+         TAG=$(date +'%Y%m%d%H%M%S')
+         # ls | grep helm
+         cd helm
+         chart_dir="charts/python_app"
+         new_image_tag=${{ github.sha }}
+         sed -i "s/^  tag: .*/  tag: $TAG/" "$chart_dir/values.yaml"
+
       - name: Deploy to external repository
         uses: cpina/github-action-push-to-another-repository@main
         env:
