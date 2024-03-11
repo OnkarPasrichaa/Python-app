@@ -43,7 +43,7 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.HELM_REPO_ACCESS_TOKEN}}
         with:
-          source-directory: helm/charts/python_app/values.yaml
+          source-directory: helm/
           destination-github-username: onkarpasrichaa
           destination-repository-name: helm
           user-email: onkar.p@antino.com
