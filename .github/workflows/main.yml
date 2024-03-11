@@ -23,10 +23,10 @@ jobs:
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         run: |
           COMMIT_COUNT=$(echo "${{ steps.commit_count.outputs.COUNT }}")
-          sed -i "s/onkarpasrichaa\/python_app:[0-9]*/onkarpasrichaa\/python_app:$COMMIT_COUNT/g" Dockerfile
-          docker build -t onkarpasrichaa/python_app:$COMMIT_COUNT .
+          sed -i "s/onkarpasrichaa\/python-app:[0-9]*/onkarpasrichaa\/python-app:$COMMIT_COUNT/g" Dockerfile
+          docker build -t onkarpasrichaa/python-app:$COMMIT_COUNT .
           echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
-          docker push onkarpasrichaa/python_app:$COMMIT_COUNT
+          docker push onkarpasrichaa/python-app:$COMMIT_COUNT
           git add Dockerfile
           git commit -m "Update image tag to $COMMIT_COUNT" || true
           git push origin main
@@ -34,17 +34,17 @@ jobs:
       - name: Update Helm Chart (if Docker image tag changed)
         run: |
           # Get current image tag from Dockerfile
-          OLD_IMAGE_TAG=$(grep -oP '(?<=onkarpasrichaa/python_app:)[\d.]+' Dockerfile)
+          OLD_IMAGE_TAG=$(grep -oP '(?<=onkarpasrichaa/python-app:)[\d.]+' Dockerfile)
 
           # Get new image tag from the image name after building
-          NEW_IMAGE_TAG=$(docker images onkarpasrichaa/python_app:latest | awk '{print $1}')
+          NEW_IMAGE_TAG=$(docker images onkarpasrichaa/python-app:latest | awk '{print $1}')
 
           # Check if the tag actually changed before committing
           if [[ "$OLD_IMAGE_TAG" != "$NEW_IMAGE_TAG" ]]; then
             git config user.name "GitHub Actions"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git checkout main
-            sed -i "s/onkarpasrichaa\/python_app:$OLD_IMAGE_TAG/onkarpasrichaa\/python_app:$NEW_IMAGE_TAG/g" helm/charts/python_app/values.yaml
+            sed -i "s/onkarpasrichaa\/python-app:$OLD_IMAGE_TAG/onkarpasrichaa\/python-app:$NEW_IMAGE_TAG/g" helm/charts/python_app/values.yaml
             git add helm/charts/python_app/values.yaml
             git commit -m "Update image tag to $NEW_IMAGE_TAG (built on $(date +%Y-%m-%d-%H%M%S))"
             git push origin main
