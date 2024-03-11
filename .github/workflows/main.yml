@@ -41,3 +41,12 @@ jobs:
           git add Dockerfile
           git commit -m "Update image tag to $COMMIT_COUNT" || true
           git push origin main
+      - name: Update Helm Chart
+        env:
+          HELM_CHART_REPO: 'https://github.com/onkarpasrichaa/helm'
+        run: |
+          TAG=$(grep -oP '(?<=onkarpasrichaa/python-app:)[\d.]+' Dockerfile)
+          sed -i "s/onkarpasrichaa\/python-app:[\d.]*/onkarpasrichaa\/python-app:$TAG/g" helm/charts/python_app/values.yaml
+          git add helm/charts/python_app/values.yaml
+          git commit -m "Update image tag to $TAG"
+          git push $HELM_CHART_REPO main
