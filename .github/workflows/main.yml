@@ -37,3 +37,14 @@ jobs:
           git add Dockerfile
           git commit -m "Update image tag to $TAG" || true
           git push origin main
+
+      - name: Deploy to external repository
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.HELM_REPO_ACCESS_TOKEN}}
+        with:
+          source-directory: helm/charts/python_app/values.yaml
+          destination-github-username: onkarpasrichaa
+          destination-repository-name: helm
+          user-email: onkar.p@antino.com
+          target-branch: "main"
