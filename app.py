@@ -1,12 +1,13 @@
 from flask import Flask
-from urllib.parse import quote
-
 
 app = Flask(__name__)
+ 
+@app.route("/")
 
-@app.route('/')
-def hello_world():
-    return 'Hello, World! I love DevOps'
+def hello():
 
-if __name__ == '__main__':
+    return "Hello from Python antino !"
+ 
+if __name__ == "__main__":
+
     app.run(host='0.0.0.0')
