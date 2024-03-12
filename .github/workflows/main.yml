@@ -42,6 +42,7 @@ jobs:
         run: |
          git clone https://github.com/OnkarPasrichaa/helm.git
          # ls | grep helm
+         TAG=${{github.sha}}
          cd helm
          chart_dir="charts/python_app"
          sed -i "s/^  tag: .*/  tag: $TAG/" "$chart_dir/values.yaml"
